@@ -1,64 +1,65 @@
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
+<! DOCTYPE html>
+<HTML lang="en">
+<수장>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Pastel Mandalart Planner</title>
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="theme-color" content="#ffffff">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      -webkit-tap-highlight-color: transparent;
-      user-select: none;
+  <Meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <제목>파스텔 만달라트 플래너</제목>
+  <Meta name="Apple-mobile-web-app-capable" content="예">
+  <Meta Name="Apple-mobile-web-app-status-bar-style" content="default">
+  <Meta name="theme-color" content="#ffffff">
+  <스크립트 src="https://cdn.tailwindcss.com"></스크립트>
+  <Link rel="preconnect" href="https://fonts.googleapis.com">
+  <링크 rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <링크 href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
+  <스타일>
+    :루트 {
+      -webkit-tap-highlight-color: 투명;
+      사용자 선택: 없음;
     }
     body {
-      font-family: 'Inter', sans-serif;
-      background-color: #fdfdfd;
-      background-image: 
-        radial-gradient(#e5e7eb 0.5px, transparent 0.5px);
-      background-size: 20px 20px;
-      overscroll-behavior: none;
-      overflow: hidden; /* 모바일 앱 느낌을 위해 전체 바디 스크롤 방지 */
+      폰트-계통: 'Inter', 산세리프;
+      배경 색상: #FDFDFD;
+      배경 이미지: 
+        radial-gradient(#e5e7eb 0.5px, 투명 0.5px);
+      배경 크기: 20px 20px;
+      오버스크롤 행동: 없음;
+      오버플로우: 숨겨짐; /* 모바일 앱 느낌을 위해 전체 바디 스크롤 방지 */
     }
-    .font-handwritten {
-      font-family: 'Nanum Pen Script', cursive;
+ . 폰트-손글씨 {
+      폰트 계열: 'Nanum Pen Script', 필기체;
     }
     .paper-shadow {
-      box-shadow: 0 4px 12px -2px rgba(0,0,0,0.04);
+      박스-그림자: 0 4px 12px -2px RGBA(0,0,0,0.04);
     }
     /* 터치 시 햅틱 피드백 느낌의 애니메이션 */
-    .active-scale:active {
+ . 액티브-스케일: 액티브 {
       transform: scale(0.96);
     }
     /* 스크롤바 숨기기 */
     .no-scrollbar::-webkit-scrollbar {
-      display: none;
+      디스플레이: 없음;
     }
-    .no-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
+ . 스크롤바 없음 {
+      -ms-overflow 스타일: 없음;
+      스크롤바 너비: 없음;
     }
     /* 모바일 안전 영역 대응 */
     .safe-top { padding-top: env(safe-area-inset-top); }
-    .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
-  </style>
-<script type="importmap">
+    .안전-바닥 { 패딩 바닥: 환경(안전-구역-삽입-하단); }
+  </스타일>
+<스크립트 유형="importmap">
 {
   "imports": {
+    "react/": "https://esm.sh/react@^19.2.3/",
     "react": "https://esm.sh/react@^19.2.3",
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "lucide-react": "https://esm.sh/lucide-react@^0.562.0"
   }
 }
-</script>
-</head>
-<body>
+</대본>
+</수장>
+<본문>
   <div id="root"></div>
-</body>
-</html>
+</본문>
+</HTML>
