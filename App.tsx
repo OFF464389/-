@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Settings, Home, ArrowLeft, Maximize2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Settings, Home, ArrowLeft, Maximize2, Languages } from 'lucide-react';
 import { Goal, Theme, YearData } from './types';
 import { PASTEL_THEMES, createInitialYearData, createEmptyGoal } from './constants';
 import { translations, Language } from './translations';
@@ -8,6 +8,23 @@ import MandalartGridComponent from './components/MandalartGrid';
 import MandalartOverview from './components/MandalartOverview';
 import DetailModal from './components/DetailModal';
 import ThemePicker from './components/ThemePicker';
+
+// 가벼운 클릭 소리 (틱)
+const playClickSound = () => {
+  try {
+    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.04);
+  } catch (e) {}
+};
 
 const playCompleteSound = () => {
   try {
@@ -18,7 +35,7 @@ const playCompleteSound = () => {
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, startTime);
       gain.gain.setValueAtTime(0, startTime);
-      gain.gain.linearRampToValueAtTime(0.7, startTime + 0.005);
+      gain.gain.linearRampToValueAtTime(0.4, startTime + 0.005);
       gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
       osc.connect(gain);
       gain.connect(audioCtx.destination);
@@ -38,13 +55,13 @@ const playRegisterSound = () => {
     const gain = audioCtx.createGain();
     osc.type = 'sine';
     osc.frequency.setValueAtTime(880, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.12);
-    gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+    osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.1);
+    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
     osc.connect(gain);
     gain.connect(audioCtx.destination);
     osc.start();
-    osc.stop(audioCtx.currentTime + 0.12);
+    osc.stop(audioCtx.currentTime + 0.1);
   } catch (e) {}
 };
 
@@ -79,11 +96,9 @@ const App: React.FC = () => {
   const theme = PASTEL_THEMES[currentYearData.colorTheme] || PASTEL_THEMES.softBlue;
   const t = translations[language];
 
-  // navigationStack이 currentYearData와 동기화되지 않을 수 있으므로, ID 기반으로 항상 최신 데이터를 참조하도록 함
   const currentFocus = useMemo(() => {
     if (navigationStack.length === 0) return currentYearData.rootGoal;
     
-    // 스택의 마지막 아이템 ID를 가져와서 전체 트리에서 다시 찾음 (최신 상태 반영 보장)
     const lastId = navigationStack[navigationStack.length - 1].id;
     const findInTree = (node: Goal): Goal | null => {
       if (node.id === lastId) return node;
@@ -106,9 +121,10 @@ const App: React.FC = () => {
     };
   };
 
-  const handleUpdateGoal = useCallback((goalId: string, updates: Partial<Goal>, soundType: 'none' | 'register' | 'complete' = 'none') => {
+  const handleUpdateGoal = useCallback((goalId: string, updates: Partial<Goal>, soundType: 'none' | 'register' | 'complete' | 'click' = 'none') => {
     if (soundType === 'register') playRegisterSound();
-    if (soundType === 'complete') playCompleteSound();
+    else if (soundType === 'complete') playCompleteSound();
+    else if (soundType === 'click') playClickSound();
 
     setData(prev => {
       const yearData = prev[selectedYear] || createInitialYearData(selectedYear);
@@ -121,11 +137,11 @@ const App: React.FC = () => {
       return nextData;
     });
 
-    // 편집 중인 상태도 즉시 업데이트
     setEditingGoal(prev => (prev && prev.id === goalId ? { ...prev, ...updates } : prev));
   }, [selectedYear, language, persist]);
 
   const handleCellClick = (goal: Goal) => {
+    playClickSound();
     if (isOverviewMode) {
       setIsOverviewMode(false);
       setNavigationStack([goal]);
@@ -143,18 +159,48 @@ const App: React.FC = () => {
   };
 
   const handleYearChange = (delta: number) => {
+    playClickSound();
     setSelectedYear(prev => prev + delta);
     setNavigationStack([]);
     setIsOverviewMode(true);
+  };
+
+  const toggleOverview = () => {
+    playClickSound();
+    setIsOverviewMode(!isOverviewMode);
+    setNavigationStack([]);
+  };
+
+  const toggleLanguage = () => {
+    playClickSound();
+    const langs: Language[] = ['ko', 'en', 'jp'];
+    const nextIdx = (langs.indexOf(language) + 1) % langs.length;
+    const nextLang = langs[nextIdx];
+    setLanguage(nextLang);
+    persist(data, nextLang);
   };
 
   return (
     <div className={`fixed inset-0 flex flex-col transition-colors duration-75 ${theme.bg} ${theme.text} safe-top overflow-hidden`}>
       <nav className="z-40 bg-white/70 backdrop-blur-xl border-b border-white/50 px-4 py-3 flex-none">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <button onClick={() => setShowThemePicker(true)} className="p-2 active-scale bg-white/50 rounded-full shadow-sm">
-            <Settings size={18} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => { playClickSound(); setShowThemePicker(true); }} 
+              className="p-2 active-scale bg-white/50 rounded-full shadow-sm"
+              title={t.pickPalette}
+            >
+              <Settings size={18} />
+            </button>
+            <button 
+              onClick={toggleLanguage} 
+              className="p-2 active-scale bg-white/50 rounded-full shadow-sm flex items-center gap-1.5"
+              title={t.language}
+            >
+              <Languages size={18} />
+              <span className="text-[10px] font-bold uppercase tracking-tighter opacity-60">{language}</span>
+            </button>
+          </div>
           
           <div className="flex items-center gap-3 bg-white/80 px-3 py-1 rounded-full shadow-inner border border-white/50">
             <button onClick={() => handleYearChange(-1)} className="p-1 active-scale">
@@ -167,8 +213,9 @@ const App: React.FC = () => {
           </div>
 
           <button 
-            onClick={() => { setIsOverviewMode(!isOverviewMode); setNavigationStack([]); }}
+            onClick={toggleOverview}
             className="p-2 active-scale bg-white/50 rounded-full shadow-sm"
+            title={isOverviewMode ? t.zoomView : t.overview}
           >
             {isOverviewMode ? <Maximize2 size={18} /> : <Home size={18} />} 
           </button>
@@ -178,13 +225,13 @@ const App: React.FC = () => {
       <div className="flex-1 overflow-y-auto no-scrollbar p-4">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest opacity-40 mb-4 px-2">
-            <span onClick={() => { setIsOverviewMode(true); setNavigationStack([]); }}>{selectedYear}</span>
+            <span onClick={() => { playClickSound(); setIsOverviewMode(true); setNavigationStack([]); }}>{selectedYear}</span>
             {!isOverviewMode && navigationStack.map((step, idx) => (
               <React.Fragment key={step.id}>
                 <span>/</span>
                 <span 
                   className={idx === navigationStack.length - 1 ? 'text-black' : ''}
-                  onClick={() => setNavigationStack(navigationStack.slice(0, idx + 1))}
+                  onClick={() => { playClickSound(); setNavigationStack(navigationStack.slice(0, idx + 1)); }}
                 >
                   {step.text || t.branch}
                 </span>
@@ -192,11 +239,11 @@ const App: React.FC = () => {
             ))}
           </div>
 
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-200">
             <h2 className="text-center mb-6 text-xl font-black tracking-tight flex items-center justify-center gap-3">
               {!isOverviewMode && navigationStack.length > 0 && (
                 <button 
-                  onClick={() => setNavigationStack(prev => prev.slice(0, -1))} 
+                  onClick={() => { playClickSound(); setNavigationStack(prev => prev.slice(0, -1)); }} 
                   className="active-scale bg-white/60 p-2 rounded-full shadow-sm"
                 >
                   <ArrowLeft size={16} />
@@ -224,7 +271,7 @@ const App: React.FC = () => {
                     theme={theme}
                     t={t}
                     onCellClick={handleCellClick}
-                    onCenterClick={(goal) => setEditingGoal(goal)}
+                    onCenterClick={(goal) => { playClickSound(); setEditingGoal(goal); }}
                     isMainLevel={navigationStack.length === 1}
                   />
                 </div>
@@ -237,7 +284,7 @@ const App: React.FC = () => {
       {editingGoal && (
         <DetailModal 
           goal={editingGoal} 
-          onClose={() => setEditingGoal(null)} 
+          onClose={() => { playClickSound(); setEditingGoal(null); }} 
           onSave={handleUpdateGoal}
           theme={theme}
           t={t}
@@ -248,6 +295,7 @@ const App: React.FC = () => {
         <ThemePicker 
           currentTheme={currentYearData.colorTheme} 
           onSelect={(themeKey) => {
+            playClickSound();
             setData(prev => {
               const yearData = prev[selectedYear] || createInitialYearData(selectedYear);
               const nextData = { ...prev, [selectedYear]: { ...yearData, colorTheme: themeKey } };
@@ -256,7 +304,7 @@ const App: React.FC = () => {
             });
             setShowThemePicker(false);
           }} 
-          onClose={() => setShowThemePicker(false)} 
+          onClose={() => { playClickSound(); setShowThemePicker(false); }} 
           t={t}
         />
       )}

@@ -7,39 +7,37 @@ import { RECOMMEND_KEYWORDS } from '../constants';
 interface DetailModalProps {
   goal: Goal;
   onClose: () => void;
-  onSave: (id: string, updates: Partial<Goal>, soundType: 'none' | 'register' | 'complete') => void;
+  onSave: (id: string, updates: Partial<Goal>, soundType: 'none' | 'register' | 'complete' | 'click') => void;
   theme: Theme;
   t: any;
 }
 
 const DetailModal: React.FC<DetailModalProps> = ({ goal, onClose, onSave, theme, t }) => {
-  // 로컬 상태를 사용하여 타이핑 반응 속도를 극대화
   const [text, setText] = useState(goal.text);
   const [notes, setNotes] = useState(goal.notes);
 
-  // '저장하기' 혹은 '등록' 시 부모 상태에 반영
   const handleRegister = () => {
+    // 저장 버튼 클릭 시 즉시 부모 상태 업데이트 및 등록 소리 재생
     onSave(goal.id, { text, notes }, 'register'); 
     onClose();
   };
 
   const handleToggleComplete = () => {
     const nextVal = !goal.isCompleted;
-    // 완료 여부는 즉시 저장
-    onSave(goal.id, { isCompleted: nextVal, text, notes }, nextVal ? 'complete' : 'none');
+    onSave(goal.id, { isCompleted: nextVal, text, notes }, nextVal ? 'complete' : 'click');
   };
 
   const handleApplyKeyword = (kw: string) => {
+    onSave(goal.id, { text: kw }, 'click'); // 키워드 선택 시 가벼운 소리
     setText(kw);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 backdrop-blur-[1px] animate-in fade-in duration-200" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/20 backdrop-blur-[1px] animate-in fade-in duration-200" onClick={onClose}>
       <div 
-        className={`w-full max-w-xl ${theme.card} rounded-t-2xl shadow-xl overflow-hidden animate-in slide-in-from-bottom duration-300 safe-bottom border-t border-white/50`}
+        className={`w-full max-w-xl ${theme.card} rounded-t-2xl shadow-lg overflow-hidden animate-in slide-in-from-bottom duration-300 safe-bottom border-t border-white/50`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* 모바일 하단 시트 핸들 */}
         <div className="w-10 h-1 bg-black/5 rounded-full mx-auto mt-3 mb-1" />
         
         <div className="px-6 py-4 flex items-center justify-between">
@@ -109,7 +107,7 @@ const DetailModal: React.FC<DetailModalProps> = ({ goal, onClose, onSave, theme,
 
             <button
               onClick={handleRegister}
-              className={`w-full flex items-center justify-center gap-2 px-10 py-4 rounded-xl font-black shadow-lg active-scale text-base
+              className={`w-full flex items-center justify-center gap-2 px-10 py-4 rounded-xl font-black shadow-md active-scale text-base
                 ${theme.solid} text-white
               `}
             >
