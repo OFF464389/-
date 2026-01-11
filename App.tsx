@@ -203,29 +203,29 @@ const App: React.FC = () => {
   }, [isOverviewMode, currentFocus, currentYearData.rootGoal.id, selectedYear, t]);
 
   return (
-    <div className={`fixed inset-0 flex flex-col transition-colors duration-300 ${theme.bg} ${theme.text} safe-top overflow-hidden`}>
-      <nav className="z-40 bg-white/80 backdrop-blur-xl border-b border-white/50 px-4 py-2.5 flex-none shadow-sm">
+    <div className={`fixed inset-0 flex flex-col transition-colors duration-150 ${theme.bg} ${theme.text} safe-top overflow-hidden`}>
+      <nav className="z-40 bg-white/90 border-b border-black/5 px-4 py-2.5 flex-none shadow-sm">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-1">
-             <div className="w-10 h-10 bg-white rounded-xl shadow-md border border-black/5 flex items-center justify-center mr-1 overflow-hidden active-scale" onClick={toggleOverview}>
+             <div className="w-10 h-10 bg-white rounded-xl shadow-md border border-black/5 flex items-center justify-center mr-1 overflow-hidden active-scale cursor-pointer" onClick={toggleOverview}>
                 <span className={`font-black text-xl bg-gradient-to-br ${theme.solid.replace('bg-', 'from-').replace('-400', '-300')} to-white/0 bg-clip-text text-transparent`}>M</span>
              </div>
             <button 
               onClick={() => { playClickSound(); setShowThemePicker(true); }} 
-              className="p-2 active-scale rounded-full hover:bg-white/50"
+              className="p-2 active-scale rounded-full hover:bg-black/5"
             >
               <Settings size={20} className="opacity-60" />
             </button>
             <button 
               onClick={toggleLanguage} 
-              className="p-2 active-scale rounded-full hover:bg-white/50 flex items-center gap-1"
+              className="p-2 active-scale rounded-full hover:bg-black/5 flex items-center gap-1"
             >
               <Languages size={20} className="opacity-60" />
               <span className="text-[10px] font-black uppercase tracking-tighter opacity-40">{language}</span>
             </button>
           </div>
           
-          <div className="flex items-center gap-3 bg-white/95 px-4 py-1.5 rounded-full shadow-inner border border-white/60">
+          <div className="flex items-center gap-3 bg-white px-4 py-1.5 rounded-full shadow-inner border border-black/5">
             <button onClick={() => handleYearChange(-1)} className="p-1 active-scale opacity-60 hover:opacity-100">
               <ChevronLeft size={20} />
             </button>
@@ -237,7 +237,7 @@ const App: React.FC = () => {
 
           <button 
             onClick={toggleOverview}
-            className="p-2.5 active-scale bg-white/80 rounded-xl shadow-md border border-white"
+            className="p-2.5 active-scale bg-white rounded-xl shadow-md border border-black/5"
           >
             {isOverviewMode ? <Maximize2 size={20} /> : <Home size={20} />} 
           </button>
@@ -261,17 +261,17 @@ const App: React.FC = () => {
             ))}
           </div>
 
-          <div className="flex-1 flex flex-col items-center justify-center animate-in fade-in slide-in-from-bottom-2 duration-500">
+          <div className="flex-1 flex flex-col items-center justify-center animate-in fade-in slide-in-from-bottom-2 duration-300">
             <h2 className="mb-6 text-2xl font-black tracking-tighter flex items-center justify-center gap-4">
               {!isOverviewMode && (
                 <button 
                   onClick={handleBack} 
-                  className="active-scale bg-white/80 p-2 rounded-full shadow-md border border-white"
+                  className="active-scale bg-white p-2 rounded-full shadow-md border border-black/5"
                 >
                   <ArrowLeft size={18} />
                 </button>
               )}
-              <span className={`bg-white/40 px-6 py-2 rounded-2xl backdrop-blur-sm border border-white/50 min-w-[200px] text-center ${!isOverviewMode && currentFocus.id === currentYearData.rootGoal.id ? theme.solid.replace('bg-', 'text-') : ''}`}>
+              <span className={`bg-white/60 px-6 py-2 rounded-2xl border border-black/5 min-w-[200px] text-center ${!isOverviewMode && currentFocus.id === currentYearData.rootGoal.id ? theme.solid.replace('bg-', 'text-') : ''}`}>
                 {displayTitle}
               </span>
             </h2>
@@ -335,7 +335,7 @@ const App: React.FC = () => {
         />
       )}
 
-      <footer className="bg-white/30 backdrop-blur-md px-6 py-4 flex-none safe-bottom border-t border-white/20">
+      <footer className="bg-white/10 px-6 py-4 flex-none safe-bottom border-t border-black/5">
         <div className="text-[10px] text-center font-black opacity-25 leading-tight uppercase tracking-[0.2em]">
           {t.instruction}
         </div>
