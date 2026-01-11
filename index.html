@@ -24,7 +24,7 @@
         radial-gradient(#e5e7eb 0.5px, transparent 0.5px);
       background-size: 20px 20px;
       overscroll-behavior: none;
-      overflow: hidden; /* 모바일 앱 느낌을 위해 전체 바디 스크롤 방지 */
+      overflow: hidden;
     }
     .font-handwritten {
       font-family: 'Nanum Pen Script', cursive;
@@ -32,11 +32,9 @@
     .paper-shadow {
       box-shadow: 0 4px 12px -2px rgba(0,0,0,0.04);
     }
-    /* 터치 시 햅틱 피드백 느낌의 애니메이션 */
     .active-scale:active {
       transform: scale(0.96);
     }
-    /* 스크롤바 숨기기 */
     .no-scrollbar::-webkit-scrollbar {
       display: none;
     }
@@ -44,7 +42,6 @@
       -ms-overflow-style: none;
       scrollbar-width: none;
     }
-    /* 모바일 안전 영역 대응 */
     .safe-top { padding-top: env(safe-area-inset-top); }
     .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
   </style>
@@ -61,5 +58,7 @@
 </head>
 <body>
   <div id="root"></div>
+  <!-- index.tsx 파일을 로드하여 앱을 시작합니다 -->
+  <script type="module" src="./index.tsx"></script>
 </body>
 </html>
