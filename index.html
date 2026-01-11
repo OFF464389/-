@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Pastel Mandalart Planner</title>
+  <title>Mandalart Planner</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="theme-color" content="#ffffff">
@@ -19,18 +19,18 @@
     }
     body {
       font-family: 'Inter', sans-serif;
-      background-color: #fdfdfd;
-      background-image: 
-        radial-gradient(#e5e7eb 0.5px, transparent 0.5px);
-      background-size: 20px 20px;
+      /* 흰색 여백을 줄이기 위해 아이콘 감성의 부드러운 그라데이션 적용 */
+      background: linear-gradient(135deg, #f8f9ff 0%, #fffafb 50%, #f9f8ff 100%);
+      background-attachment: fixed;
       overscroll-behavior: none;
       overflow: hidden;
+      color: #1a1a1a;
     }
     .font-handwritten {
       font-family: 'Nanum Pen Script', cursive;
     }
     .paper-shadow {
-      box-shadow: 0 4px 12px -2px rgba(0,0,0,0.04);
+      box-shadow: 0 4px 14px -3px rgba(0,0,0,0.06);
     }
     .active-scale:active {
       transform: scale(0.96);
@@ -44,6 +44,10 @@
     }
     .safe-top { padding-top: env(safe-area-inset-top); }
     .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+    
+    .animate-in {
+      animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+    }
   </style>
 <script type="importmap">
 {
@@ -58,7 +62,6 @@
 </head>
 <body>
   <div id="root"></div>
-  <!-- index.tsx 파일을 로드하여 앱을 시작합니다 -->
   <script type="module" src="./index.tsx"></script>
 </body>
 </html>

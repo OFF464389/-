@@ -9,7 +9,6 @@ import MandalartOverview from './components/MandalartOverview';
 import DetailModal from './components/DetailModal';
 import ThemePicker from './components/ThemePicker';
 
-// 가벼운 클릭 소리 (틱)
 const playClickSound = () => {
   try {
     const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -171,6 +170,16 @@ const App: React.FC = () => {
     setNavigationStack([]);
   };
 
+  const handleBack = () => {
+    playClickSound();
+    if (navigationStack.length <= 1) {
+      setIsOverviewMode(true);
+      setNavigationStack([]);
+    } else {
+      setNavigationStack(prev => prev.slice(0, -1));
+    }
+  };
+
   const toggleLanguage = () => {
     playClickSound();
     const langs: Language[] = ['ko', 'en', 'jp'];
@@ -180,58 +189,71 @@ const App: React.FC = () => {
     persist(data, nextLang);
   };
 
+  const filteredNavStack = useMemo(() => {
+    if (navigationStack.length === 1 && navigationStack[0].id === currentYearData.rootGoal.id) {
+      return [];
+    }
+    return navigationStack;
+  }, [navigationStack, currentYearData.rootGoal.id]);
+
+  const displayTitle = useMemo(() => {
+    if (isOverviewMode) return t.mainGrid;
+    if (currentFocus.id === currentYearData.rootGoal.id) return `${selectedYear}`;
+    return currentFocus.text || t.branch;
+  }, [isOverviewMode, currentFocus, currentYearData.rootGoal.id, selectedYear, t]);
+
   return (
-    <div className={`fixed inset-0 flex flex-col transition-colors duration-75 ${theme.bg} ${theme.text} safe-top overflow-hidden`}>
-      <nav className="z-40 bg-white/70 backdrop-blur-xl border-b border-white/50 px-4 py-3 flex-none">
+    <div className={`fixed inset-0 flex flex-col transition-colors duration-300 ${theme.bg} ${theme.text} safe-top overflow-hidden`}>
+      <nav className="z-40 bg-white/80 backdrop-blur-xl border-b border-white/50 px-4 py-2.5 flex-none shadow-sm">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+             <div className="w-10 h-10 bg-white rounded-xl shadow-md border border-black/5 flex items-center justify-center mr-1 overflow-hidden active-scale" onClick={toggleOverview}>
+                <span className={`font-black text-xl bg-gradient-to-br ${theme.solid.replace('bg-', 'from-').replace('-400', '-300')} to-white/0 bg-clip-text text-transparent`}>M</span>
+             </div>
             <button 
               onClick={() => { playClickSound(); setShowThemePicker(true); }} 
-              className="p-2 active-scale bg-white/50 rounded-full shadow-sm"
-              title={t.pickPalette}
+              className="p-2 active-scale rounded-full hover:bg-white/50"
             >
-              <Settings size={18} />
+              <Settings size={20} className="opacity-60" />
             </button>
             <button 
               onClick={toggleLanguage} 
-              className="p-2 active-scale bg-white/50 rounded-full shadow-sm flex items-center gap-1.5"
-              title={t.language}
+              className="p-2 active-scale rounded-full hover:bg-white/50 flex items-center gap-1"
             >
-              <Languages size={18} />
-              <span className="text-[10px] font-bold uppercase tracking-tighter opacity-60">{language}</span>
+              <Languages size={20} className="opacity-60" />
+              <span className="text-[10px] font-black uppercase tracking-tighter opacity-40">{language}</span>
             </button>
           </div>
           
-          <div className="flex items-center gap-3 bg-white/80 px-3 py-1 rounded-full shadow-inner border border-white/50">
-            <button onClick={() => handleYearChange(-1)} className="p-1 active-scale">
-              <ChevronLeft size={18} />
+          <div className="flex items-center gap-3 bg-white/95 px-4 py-1.5 rounded-full shadow-inner border border-white/60">
+            <button onClick={() => handleYearChange(-1)} className="p-1 active-scale opacity-60 hover:opacity-100">
+              <ChevronLeft size={20} />
             </button>
-            <span className="text-lg font-black tracking-tighter w-12 text-center">{selectedYear}</span>
-            <button onClick={() => handleYearChange(1)} className="p-1 active-scale">
-              <ChevronRight size={18} />
+            <span className="text-xl font-black tracking-tight w-14 text-center">{selectedYear}</span>
+            <button onClick={() => handleYearChange(1)} className="p-1 active-scale opacity-60 hover:opacity-100">
+              <ChevronRight size={20} />
             </button>
           </div>
 
           <button 
             onClick={toggleOverview}
-            className="p-2 active-scale bg-white/50 rounded-full shadow-sm"
-            title={isOverviewMode ? t.zoomView : t.overview}
+            className="p-2.5 active-scale bg-white/80 rounded-xl shadow-md border border-white"
           >
-            {isOverviewMode ? <Maximize2 size={18} /> : <Home size={18} />} 
+            {isOverviewMode ? <Maximize2 size={20} /> : <Home size={20} />} 
           </button>
         </div>
       </nav>
 
-      <div className="flex-1 overflow-y-auto no-scrollbar p-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest opacity-40 mb-4 px-2">
-            <span onClick={() => { playClickSound(); setIsOverviewMode(true); setNavigationStack([]); }}>{selectedYear}</span>
-            {!isOverviewMode && navigationStack.map((step, idx) => (
+      <div className="flex-1 overflow-y-auto no-scrollbar px-2 py-4 md:px-8 md:py-8">
+        <div className="max-w-5xl mx-auto h-full flex flex-col">
+          <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest opacity-25 mb-4 px-3">
+            <span className="cursor-pointer hover:opacity-100 transition-opacity" onClick={() => { playClickSound(); setIsOverviewMode(true); setNavigationStack([]); }}>{selectedYear}</span>
+            {!isOverviewMode && filteredNavStack.map((step, idx) => (
               <React.Fragment key={step.id}>
                 <span>/</span>
                 <span 
-                  className={idx === navigationStack.length - 1 ? 'text-black' : ''}
-                  onClick={() => { playClickSound(); setNavigationStack(navigationStack.slice(0, idx + 1)); }}
+                  className={`cursor-pointer transition-opacity ${idx === filteredNavStack.length - 1 ? 'text-black opacity-90 font-black' : 'hover:opacity-100'}`}
+                  onClick={() => { playClickSound(); setNavigationStack(navigationStack.slice(0, navigationStack.findIndex(s => s.id === step.id) + 1)); }}
                 >
                   {step.text || t.branch}
                 </span>
@@ -239,30 +261,33 @@ const App: React.FC = () => {
             ))}
           </div>
 
-          <div className="animate-in fade-in slide-in-from-bottom-2 duration-200">
-            <h2 className="text-center mb-6 text-xl font-black tracking-tight flex items-center justify-center gap-3">
-              {!isOverviewMode && navigationStack.length > 0 && (
+          <div className="flex-1 flex flex-col items-center justify-center animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <h2 className="mb-6 text-2xl font-black tracking-tighter flex items-center justify-center gap-4">
+              {!isOverviewMode && (
                 <button 
-                  onClick={() => { playClickSound(); setNavigationStack(prev => prev.slice(0, -1)); }} 
-                  className="active-scale bg-white/60 p-2 rounded-full shadow-sm"
+                  onClick={handleBack} 
+                  className="active-scale bg-white/80 p-2 rounded-full shadow-md border border-white"
                 >
-                  <ArrowLeft size={16} />
+                  <ArrowLeft size={18} />
                 </button>
               )}
-              {isOverviewMode ? t.mainGrid : (currentFocus.text || t.branch)}
+              <span className={`bg-white/40 px-6 py-2 rounded-2xl backdrop-blur-sm border border-white/50 min-w-[200px] text-center ${!isOverviewMode && currentFocus.id === currentYearData.rootGoal.id ? theme.solid.replace('bg-', 'text-') : ''}`}>
+                {displayTitle}
+              </span>
             </h2>
             
-            <div className="flex justify-center items-center">
+            <div className="w-full flex items-center justify-center flex-1 min-h-0">
               {isOverviewMode ? (
                 <MandalartOverview 
                   rootGoal={currentYearData.rootGoal}
+                  year={selectedYear}
                   theme={theme}
                   t={t}
                   onCellClick={handleCellClick}
                   onEditGoal={setEditingGoal}
                 />
               ) : (
-                <div className="w-full max-w-lg">
+                <div className="w-full max-w-xl aspect-square">
                   <MandalartGridComponent 
                     grid={{
                       center: currentFocus,
@@ -270,9 +295,10 @@ const App: React.FC = () => {
                     }}
                     theme={theme}
                     t={t}
+                    year={selectedYear}
                     onCellClick={handleCellClick}
                     onCenterClick={(goal) => { playClickSound(); setEditingGoal(goal); }}
-                    isMainLevel={navigationStack.length === 1}
+                    isMainLevel={currentFocus.id === currentYearData.rootGoal.id}
                   />
                 </div>
               )}
@@ -309,8 +335,8 @@ const App: React.FC = () => {
         />
       )}
 
-      <footer className="bg-white/60 backdrop-blur-md border-t border-white/40 px-6 py-4 flex-none safe-bottom">
-        <div className="text-[10px] text-center font-bold opacity-60 leading-tight uppercase tracking-tighter">
+      <footer className="bg-white/30 backdrop-blur-md px-6 py-4 flex-none safe-bottom border-t border-white/20">
+        <div className="text-[10px] text-center font-black opacity-25 leading-tight uppercase tracking-[0.2em]">
           {t.instruction}
         </div>
       </footer>

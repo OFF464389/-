@@ -4,13 +4,14 @@ import { Goal, Theme } from '../types';
 
 interface MandalartOverviewProps {
   rootGoal: Goal;
+  year: number;
   theme: Theme;
   t: any;
   onCellClick: (goal: Goal) => void;
   onEditGoal: (goal: Goal) => void;
 }
 
-const MandalartOverview: React.FC<MandalartOverviewProps> = memo(({ rootGoal, theme, t, onCellClick, onEditGoal }) => {
+const MandalartOverview: React.FC<MandalartOverviewProps> = memo(({ rootGoal, year, theme, t, onCellClick, onEditGoal }) => {
   
   const getGoalProgress = (goal: Goal): number => {
     if (goal.isCompleted) return 1;
@@ -23,20 +24,22 @@ const MandalartOverview: React.FC<MandalartOverviewProps> = memo(({ rootGoal, th
     const progress = goal ? getGoalProgress(goal) : 0;
     const isCompleted = goal?.isCompleted || false;
 
-    let bgStyle = "bg-white/90";
+    let bgStyle = "bg-white/95";
     let textColor = theme.text;
 
     if (isRootCenterGrid) {
       if (isCenter) {
-        bgStyle = "bg-white ring-1 ring-black/5";
+        // 정중앙: 비전 대신 연도만 표시하며, 배경은 깨끗한 화이트
+        bgStyle = "bg-white shadow-sm ring-1 ring-black/5 z-20";
+        textColor = "font-black text-[10px] md:text-[14px]";
       } else {
         bgStyle = `${theme.accent} bg-opacity-40`;
       }
     } else {
       if (isCenter) {
-        bgStyle = `${theme.accent} bg-opacity-40`;
+        bgStyle = `${theme.accent} bg-opacity-30`;
       } else {
-        bgStyle = "bg-white/70";
+        bgStyle = "bg-white/80";
       }
     }
 
@@ -47,14 +50,22 @@ const MandalartOverview: React.FC<MandalartOverviewProps> = memo(({ rootGoal, th
       bgStyle = `${theme.accent} bg-opacity-80`;
     }
 
+    // 연도 색상이 너무 밝다는 피드백을 반영하여 theme.text(어두운 톤)를 그대로 사용
+    const getThemeTextColor = () => {
+      if (isCenter && isRootCenterGrid) {
+        return theme.text; // 기존 theme.solid(밝음) 대신 theme.text(어두움) 적용
+      }
+      return textColor;
+    };
+
     return (
       <div
-        className={`aspect-square flex items-center justify-center p-0.5 rounded-sm border border-black/5 transition-all duration-200 text-[6px] md:text-[8px] font-bold overflow-hidden leading-tight
-          ${bgStyle} ${textColor} shadow-sm
+        className={`aspect-square flex items-center justify-center p-0.5 rounded-[4px] border border-black/5 transition-all duration-200 text-[6px] md:text-[9px] font-bold overflow-hidden leading-tight
+          ${bgStyle} ${getThemeTextColor()}
         `}
       >
         <span className="line-clamp-2 text-center">
-          {goal?.text || (isCenter && isRootCenterGrid ? "VISION" : "")}
+          {isCenter && isRootCenterGrid ? year : (goal?.text || "")}
         </span>
       </div>
     );
@@ -66,12 +77,12 @@ const MandalartOverview: React.FC<MandalartOverviewProps> = memo(({ rootGoal, th
         : category?.subGoals || [];
 
     const gridBg = isRootCenter 
-      ? `bg-white/80 border-black/5 shadow-md scale-[1.02] z-10` 
-      : 'bg-white/40 border-white/40 backdrop-blur-sm';
+      ? `bg-white/90 border-white/50 shadow-md scale-[1.04] z-10 rounded-xl` 
+      : 'bg-white/20 border-white/10 backdrop-blur-[2px] rounded-lg shadow-sm';
 
     return (
       <div 
-        className={`grid grid-cols-3 gap-0.5 p-1 rounded-lg border transition-all duration-300 h-full cursor-pointer hover:scale-[1.01] active:scale-95
+        className={`grid grid-cols-3 gap-[3px] md:gap-1.5 p-1 md:p-2 border transition-all duration-300 h-full cursor-pointer hover:scale-[1.01] active:scale-95
           ${gridBg}
         `}
         onClick={() => category && onCellClick(category)}
@@ -96,7 +107,7 @@ const MandalartOverview: React.FC<MandalartOverviewProps> = memo(({ rootGoal, th
   };
 
   return (
-    <div className="grid grid-cols-3 gap-2 md:gap-4 w-full max-w-6xl mx-auto aspect-square p-3 bg-white/20 rounded-2xl border border-white/30 backdrop-blur-sm shadow-sm animate-in fade-in zoom-in-95 duration-500">
+    <div className="grid grid-cols-3 gap-2 md:gap-5 w-full max-w-lg md:max-w-4xl mx-auto aspect-square p-2 bg-white/5 rounded-3xl border border-white/10 backdrop-blur-sm animate-in fade-in zoom-in-95 duration-500">
       {[0, 1, 2, 3, 'ROOT', 4, 5, 6, 7].map((pos, idx) => {
         if (pos === 'ROOT') {
           return <React.Fragment key="root">{renderGrid(rootGoal, true)}</React.Fragment>;

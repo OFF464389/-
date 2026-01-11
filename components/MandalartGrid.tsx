@@ -8,13 +8,14 @@ interface MandalartGridProps {
     surrounding: Goal[];
   };
   theme: Theme;
+  year: number;
   onCellClick: (goal: Goal) => void;
   onCenterClick: (goal: Goal) => void;
   isMainLevel: boolean;
   t: any;
 }
 
-const MandalartGrid: React.FC<MandalartGridProps> = memo(({ grid, theme, onCellClick, onCenterClick, isMainLevel, t }) => {
+const MandalartGrid: React.FC<MandalartGridProps> = memo(({ grid, theme, year, onCellClick, onCenterClick, isMainLevel, t }) => {
   
   const getGoalProgress = (goal: Goal): number => {
     if (goal.isCompleted) return 1;
@@ -86,7 +87,9 @@ const MandalartGrid: React.FC<MandalartGridProps> = memo(({ grid, theme, onCellC
           className={`absolute bottom-0 left-0 right-0 ${theme.solid} opacity-10 transition-all duration-200`}
           style={{ height: `${centerProgress * 100}%` }}
         />
-        <span className="relative z-10 line-clamp-3">{grid.center.text || t.focus}</span>
+        <span className={`relative z-10 line-clamp-3 ${isMainLevel ? theme.text + ' text-2xl md:text-3xl' : ''}`}>
+          {isMainLevel ? year : (grid.center.text || t.focus)}
+        </span>
       </button>
       {renderCell(4)}
 
