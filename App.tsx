@@ -255,10 +255,13 @@ const App: React.FC = () => {
 
   return (
     <div className={`fixed inset-0 flex flex-col transition-colors duration-150 ${theme.bg} ${theme.text} safe-top overflow-hidden`}>
-      <nav className="z-40 bg-white/90 border-b border-black/5 px-4 py-2.5 flex-none shadow-sm">
+      <nav className="z-40 bg-white/90 border-b border-black/5 px-4 py-2 flex-none shadow-sm">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-1">
-             <div className="w-10 h-10 bg-white rounded-xl shadow-md border border-black/5 flex items-center justify-center mr-1 overflow-hidden active-scale cursor-pointer" onClick={toggleOverview}>
+             <div 
+               className={`w-10 h-10 bg-white rounded-xl shadow-md border border-black/5 flex items-center justify-center mr-1 overflow-hidden active-scale cursor-pointer ${isOverviewMode && !showTimeline ? 'ring-2 ring-blue-400' : ''}`} 
+               onClick={toggleOverview}
+             >
                 <span className={`font-black text-xl bg-gradient-to-br ${theme.solid.replace('bg-', 'from-').replace('-400', '-300')} to-white/0 bg-clip-text text-transparent`}>M</span>
              </div>
             <button onClick={() => { playClickSound(); setShowThemePicker(true); }} className="p-2 active-scale rounded-full hover:bg-black/5">
@@ -270,24 +273,20 @@ const App: React.FC = () => {
             </button>
           </div>
           
-          <div className="flex items-center gap-3 bg-white px-4 py-1.5 rounded-full shadow-inner border border-black/5">
+          <div className="flex items-center gap-2 bg-white px-3 py-1 rounded-full shadow-inner border border-black/5">
             <button onClick={() => handleYearChange(-1)} className="p-1 active-scale opacity-60 hover:opacity-100">
-              <ChevronLeft size={20} />
+              <ChevronLeft size={18} />
             </button>
-            <span className="text-xl font-black tracking-tight w-14 text-center">{selectedYear}</span>
+            <span className="text-lg font-black tracking-tight w-12 text-center">{selectedYear}</span>
             <button onClick={() => handleYearChange(1)} className="p-1 active-scale opacity-60 hover:opacity-100">
-              <ChevronRight size={20} />
+              <ChevronRight size={18} />
             </button>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <button onClick={() => { playClickSound(); setShowTimeline(!showTimeline); setIsOverviewMode(false); }}
               className={`p-2.5 active-scale rounded-xl shadow-md border border-black/5 ${showTimeline ? theme.solid + ' text-white' : 'bg-white'}`}>
               <History size={20} />
-            </button>
-            <button onClick={toggleOverview}
-              className={`p-2.5 active-scale rounded-xl shadow-md border border-black/5 ${isOverviewMode && !showTimeline ? theme.solid + ' text-white' : 'bg-white'}`}>
-              <LayoutGrid size={20} />
             </button>
           </div>
         </div>
