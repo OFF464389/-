@@ -1,6 +1,7 @@
 
 import React, { memo } from 'react';
 import { Goal, Theme } from '../types';
+import { createEmptyGoal } from '../constants';
 
 interface MandalartGridProps {
   grid: {
@@ -24,10 +25,15 @@ const MandalartGrid: React.FC<MandalartGridProps> = memo(({ grid, theme, year, o
     return completedCount / goal.subGoals.length;
   };
 
-  const renderCell = (index: number) => {
-    const goal = grid.surrounding[index];
-    if (!goal) return <div key={index} className="aspect-square bg-gray-50/50 rounded-lg border border-dashed border-gray-200" />;
+  // 핵심: 빙고판 유지를 위해 무조건 8개 칸 데이터를 생성/매칭
+  const surroundingGoals = Array.from({ length: 8 }, (_, i) => {
+    return grid.surrounding && grid.surrounding[i] 
+      ? grid.surrounding[i] 
+      : createEmptyGoal(`${grid.center.id}-fill-${i}`, '');
+  });
 
+  const renderCell = (index: number) => {
+    const goal = surroundingGoals[index];
     const progress = getGoalProgress(goal);
     let bgClass = isMainLevel ? `${theme.accent} bg-opacity-30` : theme.card;
 
@@ -37,30 +43,33 @@ const MandalartGrid: React.FC<MandalartGridProps> = memo(({ grid, theme, year, o
       bgClass = theme.accent;
     }
 
+    const formatDate = (iso: string) => {
+      const d = new Date(iso);
+      return `${d.getMonth() + 1}.${d.getDate()}`;
+    };
+
     return (
       <button
         key={goal.id}
         onClick={() => onCellClick(goal)}
-        className={`relative aspect-square flex items-center justify-center p-2 rounded-lg md:rounded-xl shadow-sm border border-black/5 active:scale-95 transition-transform duration-75 paper-shadow
+        className={`relative aspect-square flex flex-col items-center justify-center p-2 rounded-lg md:rounded-xl shadow-sm border border-black/5 active:scale-95 transition-transform duration-75 paper-shadow
           ${bgClass}
           ${isMainLevel ? 'text-xs md:text-base font-black' : 'text-[10px] md:text-xs font-bold'}
           ${goal.isCompleted ? 'text-white' : ''}
         `}
       >
         {!goal.isCompleted && progress > 0 && (
-           <div 
-             className={`absolute inset-0 rounded-lg md:rounded-xl ${theme.accent} opacity-40`} 
-           />
+           <div className={`absolute inset-0 rounded-lg md:rounded-xl ${theme.accent} opacity-40`} />
         )}
 
         <span className="relative z-10 text-center line-clamp-3 leading-tight">
           {goal.text || (isMainLevel ? `${t.branch}` : `${t.subTask}`)}
         </span>
 
-        {goal.isCompleted && (
-          <div className="absolute top-1.5 right-1.5 w-3 h-3 rounded-full bg-white/30 border border-white/50 flex items-center justify-center">
-             <div className="w-1 h-1 bg-white rounded-full" />
-          </div>
+        {goal.isCompleted && goal.completedAt && (
+          <span className="absolute bottom-1 right-1.5 text-[7px] md:text-[9px] font-black opacity-60 leading-none">
+            {formatDate(goal.completedAt)}
+          </span>
         )}
       </button>
     );

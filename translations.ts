@@ -20,6 +20,11 @@ export const translations = {
     language: "언어",
     overview: "홈 (전체보기)",
     zoomView: "상세 보기",
+    timeline: "히스토리",
+    firstHalf: "상반기",
+    secondHalf: "하반기",
+    noHistory: "아직 완료된 목표가 없습니다.",
+    months: ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"]
   },
   en: {
     coreVision: "Core Vision",
@@ -41,11 +46,16 @@ export const translations = {
     language: "Language",
     overview: "Home (Overview)",
     zoomView: "Zoom View",
+    timeline: "Timeline",
+    firstHalf: "1st Half",
+    secondHalf: "2nd Half",
+    noHistory: "No completed goals yet.",
+    months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
   },
   jp: {
     coreVision: "メインテーマ",
     branch: "カテゴリー",
-    subTask: "サブタスク",
+    subTask: "サブ타스크",
     goalDetails: "目標の詳細",
     theGoal: "目標",
     placeholderGoal: "何を達成したいですか？",
@@ -62,6 +72,11 @@ export const translations = {
     language: "言語",
     overview: "ホーム (全体)",
     zoomView: "詳細表示",
+    timeline: "履歴",
+    firstHalf: "上半期",
+    secondHalf: "下半期",
+    noHistory: "完了した目標はまだありません。",
+    months: ["1月", "2月", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"]
   }
 };
 

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Settings, Home, ArrowLeft, Maximize2, Languages } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Settings, Home, ArrowLeft, Maximize2, Languages, History, LayoutGrid } from 'lucide-react';
 import { Goal, Theme, YearData } from './types';
 import { PASTEL_THEMES, createInitialYearData, createEmptyGoal } from './constants';
 import { translations, Language } from './translations';
@@ -8,40 +8,54 @@ import MandalartGridComponent from './components/MandalartGrid';
 import MandalartOverview from './components/MandalartOverview';
 import DetailModal from './components/DetailModal';
 import ThemePicker from './components/ThemePicker';
+import TimelineView from './components/TimelineView';
+import ChecklistView from './components/ChecklistView';
+
+let sharedAudioCtx: AudioContext | null = null;
+
+const getAudioCtx = () => {
+  if (!sharedAudioCtx) {
+    sharedAudioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+  }
+  if (sharedAudioCtx.state === 'suspended') {
+    sharedAudioCtx.resume();
+  }
+  return sharedAudioCtx;
+};
 
 const playClickSound = () => {
   try {
-    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
-    gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+    osc.frequency.setValueAtTime(1200, ctx.currentTime);
+    gain.gain.setValueAtTime(0.05, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04);
     osc.connect(gain);
-    gain.connect(audioCtx.destination);
+    gain.connect(ctx.destination);
     osc.start();
-    osc.stop(audioCtx.currentTime + 0.04);
+    osc.stop(ctx.currentTime + 0.04);
   } catch (e) {}
 };
 
 const playCompleteSound = () => {
   try {
-    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const ctx = getAudioCtx();
+    const now = ctx.currentTime;
     const playNote = (freq: number, startTime: number, duration: number) => {
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, startTime);
       gain.gain.setValueAtTime(0, startTime);
       gain.gain.linearRampToValueAtTime(0.4, startTime + 0.005);
       gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
       osc.connect(gain);
-      gain.connect(audioCtx.destination);
+      gain.connect(ctx.destination);
       osc.start(startTime);
       osc.stop(startTime + duration);
     };
-    const now = audioCtx.currentTime;
     playNote(1046.50, now, 0.4); 
     playNote(1318.51, now + 0.05, 0.5); 
   } catch (e) {}
@@ -49,29 +63,31 @@ const playCompleteSound = () => {
 
 const playRegisterSound = () => {
   try {
-    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(880, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.1);
-    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.1);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
     osc.connect(gain);
-    gain.connect(audioCtx.destination);
+    gain.connect(ctx.destination);
     osc.start();
-    osc.stop(audioCtx.currentTime + 0.1);
+    osc.stop(ctx.currentTime + 0.1);
   } catch (e) {}
 };
 
 const App: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [data, setData] = useState<Record<number, YearData>>({});
+  const [isOverviewMode, setIsOverviewMode] = useState(true);
+  const [isVisionPath, setIsVisionPath] = useState(false); // 중앙 2026 비전을 통해 들어왔는지 여부
   const [navigationStack, setNavigationStack] = useState<Goal[]>([]);
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
   const [showThemePicker, setShowThemePicker] = useState(false);
+  const [showTimeline, setShowTimeline] = useState(false);
   const [language, setLanguage] = useState<Language>('ko');
-  const [isOverviewMode, setIsOverviewMode] = useState(true);
 
   useEffect(() => {
     const saved = localStorage.getItem('mandalart_v3');
@@ -112,7 +128,14 @@ const App: React.FC = () => {
   }, [navigationStack, currentYearData.rootGoal]);
 
   const findAndUpdateGoal = (root: Goal, targetId: string, updates: Partial<Goal>): Goal => {
-    if (root.id === targetId) return { ...root, ...updates };
+    if (root.id === targetId) {
+      if (updates.isCompleted === true && !root.isCompleted) {
+        updates.completedAt = new Date().toISOString();
+      } else if (updates.isCompleted === false) {
+        updates.completedAt = undefined;
+      }
+      return { ...root, ...updates };
+    }
     if (!root.subGoals) return root;
     return {
       ...root,
@@ -128,10 +151,7 @@ const App: React.FC = () => {
     setData(prev => {
       const yearData = prev[selectedYear] || createInitialYearData(selectedYear);
       const updatedRoot = findAndUpdateGoal(yearData.rootGoal, goalId, updates);
-      const nextData = {
-        ...prev,
-        [selectedYear]: { ...yearData, rootGoal: updatedRoot }
-      };
+      const nextData = { ...prev, [selectedYear]: { ...yearData, rootGoal: updatedRoot } };
       persist(nextData, language);
       return nextData;
     });
@@ -139,20 +159,54 @@ const App: React.FC = () => {
     setEditingGoal(prev => (prev && prev.id === goalId ? { ...prev, ...updates } : prev));
   }, [selectedYear, language, persist]);
 
+  const handleAddSubGoal = useCallback((parentId: string) => {
+    playClickSound();
+    setData(prev => {
+      const yearData = prev[selectedYear] || createInitialYearData(selectedYear);
+      const findAndAdd = (node: Goal): Goal => {
+        if (node.id === parentId) {
+          const newId = `${parentId}-sub-${Date.now()}`;
+          return { ...node, subGoals: [...(node.subGoals || []), createEmptyGoal(newId, "")] };
+        }
+        if (!node.subGoals) return node;
+        return { ...node, subGoals: node.subGoals.map(findAndAdd) };
+      };
+      const updatedRoot = findAndAdd(yearData.rootGoal);
+      const nextData = { ...prev, [selectedYear]: { ...yearData, rootGoal: updatedRoot } };
+      persist(nextData, language);
+      return nextData;
+    });
+  }, [selectedYear, language, persist]);
+
   const handleCellClick = (goal: Goal) => {
     playClickSound();
     if (isOverviewMode) {
       setIsOverviewMode(false);
-      setNavigationStack([goal]);
-    } else {
-      if (navigationStack.length < 2) {
-        if (!goal.subGoals) {
-          const subGoals = Array.from({ length: 8 }, (_, i) => createEmptyGoal(`${goal.id}-sub-${i}`));
-          handleUpdateGoal(goal.id, { subGoals }, 'none');
-        }
-        setNavigationStack(prev => [...prev, goal]);
+      if (goal.id === currentYearData.rootGoal.id) {
+        // 중앙 2026 비전 클릭 시 -> 비전 경로 시작
+        setIsVisionPath(true);
+        setNavigationStack([]);
       } else {
-        setEditingGoal(goal);
+        // 외부 분야 클릭 시 -> 외부 경로 시작
+        setIsVisionPath(false);
+        setNavigationStack([goal]);
+      }
+    } else {
+      if (isVisionPath) {
+        // [중앙 2026 비전 경로]
+        if (navigationStack.length === 0) {
+          // 1단계(루트 3x3)에서 분야 클릭 -> 2단계(분야별 3x3 세부과제 그리드)로 진입
+          setNavigationStack([goal]);
+        } else if (navigationStack.length === 1) {
+          // 2단계(분야별 3x3)에서 세부과제 클릭 -> 비전 경로이므로 이름 편집만
+          setEditingGoal(goal);
+        }
+      } else {
+        // [외부 분야 경로]
+        if (navigationStack.length === 1) {
+          // 세부과제 클릭 시 바로 체크리스트 진입
+          setNavigationStack(prev => [...prev, goal]);
+        }
       }
     }
   };
@@ -162,19 +216,23 @@ const App: React.FC = () => {
     setSelectedYear(prev => prev + delta);
     setNavigationStack([]);
     setIsOverviewMode(true);
+    setIsVisionPath(false);
+    setShowTimeline(false);
   };
 
   const toggleOverview = () => {
     playClickSound();
-    setIsOverviewMode(!isOverviewMode);
+    setIsOverviewMode(true);
+    setIsVisionPath(false);
     setNavigationStack([]);
+    setShowTimeline(false);
   };
 
   const handleBack = () => {
     playClickSound();
-    if (navigationStack.length <= 1) {
+    if (navigationStack.length === 0) {
       setIsOverviewMode(true);
-      setNavigationStack([]);
+      setIsVisionPath(false);
     } else {
       setNavigationStack(prev => prev.slice(0, -1));
     }
@@ -189,18 +247,11 @@ const App: React.FC = () => {
     persist(data, nextLang);
   };
 
-  const filteredNavStack = useMemo(() => {
-    if (navigationStack.length === 1 && navigationStack[0].id === currentYearData.rootGoal.id) {
-      return [];
-    }
-    return navigationStack;
-  }, [navigationStack, currentYearData.rootGoal.id]);
-
   const displayTitle = useMemo(() => {
     if (isOverviewMode) return t.mainGrid;
-    if (currentFocus.id === currentYearData.rootGoal.id) return `${selectedYear}`;
+    if (navigationStack.length === 0) return `${selectedYear} Vision`;
     return currentFocus.text || t.branch;
-  }, [isOverviewMode, currentFocus, currentYearData.rootGoal.id, selectedYear, t]);
+  }, [isOverviewMode, navigationStack.length, currentFocus, selectedYear, t]);
 
   return (
     <div className={`fixed inset-0 flex flex-col transition-colors duration-150 ${theme.bg} ${theme.text} safe-top overflow-hidden`}>
@@ -210,16 +261,10 @@ const App: React.FC = () => {
              <div className="w-10 h-10 bg-white rounded-xl shadow-md border border-black/5 flex items-center justify-center mr-1 overflow-hidden active-scale cursor-pointer" onClick={toggleOverview}>
                 <span className={`font-black text-xl bg-gradient-to-br ${theme.solid.replace('bg-', 'from-').replace('-400', '-300')} to-white/0 bg-clip-text text-transparent`}>M</span>
              </div>
-            <button 
-              onClick={() => { playClickSound(); setShowThemePicker(true); }} 
-              className="p-2 active-scale rounded-full hover:bg-black/5"
-            >
+            <button onClick={() => { playClickSound(); setShowThemePicker(true); }} className="p-2 active-scale rounded-full hover:bg-black/5">
               <Settings size={20} className="opacity-60" />
             </button>
-            <button 
-              onClick={toggleLanguage} 
-              className="p-2 active-scale rounded-full hover:bg-black/5 flex items-center gap-1"
-            >
+            <button onClick={toggleLanguage} className="p-2 active-scale rounded-full hover:bg-black/5 flex items-center gap-1">
               <Languages size={20} className="opacity-60" />
               <span className="text-[10px] font-black uppercase tracking-tighter opacity-40">{language}</span>
             </button>
@@ -235,103 +280,95 @@ const App: React.FC = () => {
             </button>
           </div>
 
-          <button 
-            onClick={toggleOverview}
-            className="p-2.5 active-scale bg-white rounded-xl shadow-md border border-black/5"
-          >
-            {isOverviewMode ? <Maximize2 size={20} /> : <Home size={20} />} 
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => { playClickSound(); setShowTimeline(!showTimeline); setIsOverviewMode(false); }}
+              className={`p-2.5 active-scale rounded-xl shadow-md border border-black/5 ${showTimeline ? theme.solid + ' text-white' : 'bg-white'}`}>
+              <History size={20} />
+            </button>
+            <button onClick={toggleOverview}
+              className={`p-2.5 active-scale rounded-xl shadow-md border border-black/5 ${isOverviewMode && !showTimeline ? theme.solid + ' text-white' : 'bg-white'}`}>
+              <LayoutGrid size={20} />
+            </button>
+          </div>
         </div>
       </nav>
 
-      <div className="flex-1 overflow-y-auto no-scrollbar px-2 py-4 md:px-8 md:py-8">
+      <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-4 md:px-8 md:py-10">
         <div className="max-w-5xl mx-auto h-full flex flex-col">
-          <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest opacity-25 mb-4 px-3">
-            <span className="cursor-pointer hover:opacity-100 transition-opacity" onClick={() => { playClickSound(); setIsOverviewMode(true); setNavigationStack([]); }}>{selectedYear}</span>
-            {!isOverviewMode && filteredNavStack.map((step, idx) => (
-              <React.Fragment key={step.id}>
-                <span>/</span>
-                <span 
-                  className={`cursor-pointer transition-opacity ${idx === filteredNavStack.length - 1 ? 'text-black opacity-90 font-black' : 'hover:opacity-100'}`}
-                  onClick={() => { playClickSound(); setNavigationStack(navigationStack.slice(0, navigationStack.findIndex(s => s.id === step.id) + 1)); }}
-                >
-                  {step.text || t.branch}
-                </span>
-              </React.Fragment>
-            ))}
-          </div>
+          
+          {!showTimeline && !isOverviewMode && (
+            <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest opacity-25 mb-4 px-3">
+              <span className="cursor-pointer hover:opacity-100" onClick={toggleOverview}>{selectedYear}</span>
+              {navigationStack.map((step, idx) => (
+                <React.Fragment key={step.id}>
+                  <span>/</span>
+                  <span className={`cursor-pointer ${idx === navigationStack.length - 1 ? 'text-black opacity-90' : 'hover:opacity-100'}`}
+                    onClick={() => setNavigationStack(navigationStack.slice(0, idx + 1))}>
+                    {step.text || (idx === 0 ? t.branch : t.subTask)}
+                  </span>
+                </React.Fragment>
+              ))}
+            </div>
+          )}
 
           <div className="flex-1 flex flex-col items-center justify-center animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <h2 className="mb-6 text-2xl font-black tracking-tighter flex items-center justify-center gap-4">
-              {!isOverviewMode && (
-                <button 
-                  onClick={handleBack} 
-                  className="active-scale bg-white p-2 rounded-full shadow-md border border-black/5"
-                >
-                  <ArrowLeft size={18} />
-                </button>
-              )}
-              <span className={`bg-white/60 px-6 py-2 rounded-2xl border border-black/5 min-w-[200px] text-center ${!isOverviewMode && currentFocus.id === currentYearData.rootGoal.id ? theme.solid.replace('bg-', 'text-') : ''}`}>
-                {displayTitle}
-              </span>
-            </h2>
-            
-            <div className="w-full flex items-center justify-center flex-1 min-h-0">
-              {isOverviewMode ? (
-                <MandalartOverview 
-                  rootGoal={currentYearData.rootGoal}
-                  year={selectedYear}
-                  theme={theme}
-                  t={t}
-                  onCellClick={handleCellClick}
-                  onEditGoal={setEditingGoal}
-                />
-              ) : (
-                <div className="w-full max-w-xl aspect-square">
-                  <MandalartGridComponent 
-                    grid={{
-                      center: currentFocus,
-                      surrounding: currentFocus.subGoals || []
-                    }}
-                    theme={theme}
-                    t={t}
-                    year={selectedYear}
-                    onCellClick={handleCellClick}
-                    onCenterClick={(goal) => { playClickSound(); setEditingGoal(goal); }}
-                    isMainLevel={currentFocus.id === currentYearData.rootGoal.id}
-                  />
+            {showTimeline ? (
+               <TimelineView rootGoal={currentYearData.rootGoal} theme={theme} t={t} onClose={() => setShowTimeline(false)} onGoalClick={setEditingGoal} />
+            ) : isOverviewMode ? (
+               <div className="w-full flex flex-col items-center">
+                 <h2 className="mb-6 text-xl font-black tracking-tight opacity-40 uppercase tracking-[0.2em]">{t.mainGrid}</h2>
+                 <MandalartOverview rootGoal={currentYearData.rootGoal} year={selectedYear} theme={theme} t={t} onCellClick={handleCellClick} onEditGoal={setEditingGoal} />
+               </div>
+            ) : (
+              <>
+                <h2 className="mb-8 text-2xl font-black tracking-tighter flex items-center justify-center gap-4">
+                  <button onClick={handleBack} className="active-scale bg-white p-2 rounded-full shadow-md border border-black/5">
+                    <ArrowLeft size={18} />
+                  </button>
+                  <span className={`bg-white/60 px-6 py-2 rounded-2xl border border-black/5 min-w-[200px] text-center`}>
+                    {displayTitle}
+                  </span>
+                </h2>
+                
+                <div className="w-full flex items-center justify-center flex-1 min-h-0">
+                  {/* 체크리스트 뷰는 오직 '외부 경로'의 마지막 단계에서만 보여줌 */}
+                  {!isVisionPath && navigationStack.length === 2 ? (
+                    <ChecklistView 
+                      branchGoal={currentFocus} theme={theme} t={t} language={language}
+                      onEditGoal={setEditingGoal} onUpdateGoal={handleUpdateGoal}
+                      onAddSubGoal={() => handleAddSubGoal(currentFocus.id)}
+                    />
+                  ) : (
+                    <div className="w-full max-w-xl aspect-square">
+                      <MandalartGridComponent 
+                        grid={{ 
+                          center: currentFocus, 
+                          surrounding: currentFocus.subGoals || Array.from({length:8}, (_,i)=>createEmptyGoal(`${currentFocus.id}-slot-${i}`)) 
+                        }}
+                        theme={theme} t={t} year={selectedYear} onCellClick={handleCellClick}
+                        onCenterClick={(goal) => { playClickSound(); setEditingGoal(goal); }}
+                        isMainLevel={navigationStack.length === 0}
+                      />
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </>
+            )}
           </div>
         </div>
       </div>
 
       {editingGoal && (
-        <DetailModal 
-          goal={editingGoal} 
-          onClose={() => { playClickSound(); setEditingGoal(null); }} 
-          onSave={handleUpdateGoal}
-          theme={theme}
-          t={t}
-        />
+        <DetailModal goal={editingGoal} onClose={() => { playClickSound(); setEditingGoal(null); }} onSave={handleUpdateGoal} theme={theme} t={t} />
       )}
 
       {showThemePicker && (
-        <ThemePicker 
-          currentTheme={currentYearData.colorTheme} 
-          onSelect={(themeKey) => {
+        <ThemePicker currentTheme={currentYearData.colorTheme} onSelect={(themeKey) => {
             playClickSound();
-            setData(prev => {
-              const yearData = prev[selectedYear] || createInitialYearData(selectedYear);
-              const nextData = { ...prev, [selectedYear]: { ...yearData, colorTheme: themeKey } };
-              persist(nextData, language);
-              return nextData;
-            });
+            setData(prev => ({ ...prev, [selectedYear]: { ...currentYearData, colorTheme: themeKey } }));
+            persist({ ...data, [selectedYear]: { ...currentYearData, colorTheme: themeKey } }, language);
             setShowThemePicker(false);
-          }} 
-          onClose={() => { playClickSound(); setShowThemePicker(false); }} 
-          t={t}
+          }} onClose={() => setShowThemePicker(false)} t={t}
         />
       )}
 

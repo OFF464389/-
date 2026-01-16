@@ -4,6 +4,7 @@ export interface Goal {
   text: string;
   notes: string;
   isCompleted: boolean;
+  completedAt?: string; // ISO string for the date of completion
   subGoals?: Goal[]; // Exactly 8 sub-goals if it has any
 }
 
